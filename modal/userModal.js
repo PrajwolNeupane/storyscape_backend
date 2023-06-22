@@ -16,6 +16,10 @@ const  UserSchema = new mongoose.Schema({
     photoURL:{
         type:String,
         required:true
+    },
+    isCreater:{
+        type:Boolean,
+        required:true
     }
 })
 
