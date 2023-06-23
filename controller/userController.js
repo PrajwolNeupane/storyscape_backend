@@ -4,10 +4,12 @@ import jwt from 'jsonwebtoken';
 import { getStorage, ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import { initializeApp } from "firebase/app";
 import config from "../config/firebase.config.js"
+import * as dotenv from 'dotenv';
+dotenv.config()
 
-initializeApp(config.firebaseConfig);
 
-const storage = getStorage();
+
+const storage = getStorage(initializeApp(config.firebaseConfig),process.env.STORAGE_URL);
 
 export async function auth(req, res) {
     try {

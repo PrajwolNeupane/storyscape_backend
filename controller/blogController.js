@@ -7,10 +7,10 @@ import jwt from 'jsonwebtoken';
 import imagemin from "imagemin";
 import imageminMozjpeg from "imagemin-mozjpeg";
 import imageminPngquant from "imagemin-pngquant";
+import * as dotenv from 'dotenv';
+dotenv.config()
 
-initializeApp(config.firebaseConfig);
-
-const storage = getStorage();
+const storage = getStorage(initializeApp(config.firebaseConfig),process.env.STORAGE_URL);
 
 export async function postBlog(req, res) {
 
