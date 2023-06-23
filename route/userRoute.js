@@ -1,7 +1,10 @@
 import { checkKey } from '../controller/middleware.js';
 import express from 'express'
 import 'dotenv/config';
-import { auth, logIn, signUp,adminSignUp,linkUser,adminLogIn } from '../controller/userController.js';
+import { auth, logIn, signUp,adminSignUp,linkUser,adminLogIn, updateProfilePicture } from '../controller/userController.js';
+import multer from "multer";
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
@@ -16,5 +19,7 @@ router.post("/admin/login",checkKey,adminLogIn)
 router.post("/admin/createUser",checkKey,adminSignUp)
 
 router.post("/admin/linkUser",checkKey,linkUser)
+
+router.post("/update/profile/picture",[checkKey,upload.single("filename")],updateProfilePicture);
 
 export default router;

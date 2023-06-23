@@ -1,6 +1,13 @@
 import User from '../modal/userModal.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { getStorage, ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
+import { initializeApp } from "firebase/app";
+import config from "../config/firebase.config.js"
+
+initializeApp(config.firebaseConfig);
+
+const storage = getStorage();
 
 export async function auth(req, res) {
     try {
@@ -177,6 +184,38 @@ export async function linkUser(req, res) {
                 return res.send({ message: "Log In credentials invalid" });
             }
         }
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+export async function updateProfilePicture(req, res) {
+    try {
+        const token = req.body.token;
+        if (!token) return res.status(401).send('Acess denied. No token provided.');
+
+        const decode = jwt.verify(token, process.env.JWT_CODE);
+
+        if (!decode) return res.status(401).send('Acess denied. No token provided.');
+
+        var user = await User.findById(decode.id).select(['-password', "-__v"]);
+        if (user) {
+            const storageRef = ref(storage, `${user?._id + "" + Date.now()}`);
+            const metadata = {
+                contentType: req.file.mimetype,
+            };
+            const snapshot = await uploadBytesResumable(storageRef, req.file.buffer, metadata);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            user.photoURL = downloadURL;
+            await user.save();
+            return res.send({
+                name: user.name,
+                email: user.email,
+                photoURL: user.photoURL,
+                isCreater: user.isCreater
+            })
+        }
+
     } catch (e) {
         console.log(e);
     }

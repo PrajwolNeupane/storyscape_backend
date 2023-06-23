@@ -9,12 +9,12 @@ const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const app = express();
 app.use(express.json());
 
+
 app.use(cors({
     origin: "*"
 }));
 
 app.use("/api/v2/user", userRoute);
-
 
 
 app.listen(process.env.PORT || 8000, async () => {
