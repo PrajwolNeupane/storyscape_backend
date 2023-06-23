@@ -4,6 +4,9 @@ import { initializeApp } from "firebase/app";
 import config from "../config/firebase.config.js"
 import User from "../modal/userModal.js";
 import jwt from 'jsonwebtoken';
+import imagemin from "imagemin";
+import imageminMozjpeg from "imagemin-mozjpeg";
+import imageminPngquant from "imagemin-pngquant";
 
 initializeApp(config.firebaseConfig);
 
@@ -26,12 +29,18 @@ export async function postBlog(req, res) {
         if (user) {
 
             for (const curr of req.files) {
+                const compressedImage = await imagemin.buffer(curr.buffer, {
+                    plugins: [
+                        imageminMozjpeg({ quality: 60 }), // Adjust the quality as per your requirements
+                        imageminPngquant({ quality: [0.6, 0.6] }), // Adjust the quality range as per your requirements
+                    ]
+                });
                 const storageRef = ref(storage, `BlogImage/${curr.originalname}`);
                 const metadata = {
                     contentType: curr.mimetype,
                 };
 
-                const snapshot = await uploadBytesResumable(storageRef, curr.buffer, metadata);
+                const snapshot = await uploadBytesResumable(storageRef, compressedImage, metadata);
                 const url = await getDownloadURL(snapshot.ref);
 
                 downloadURLs.push(url);
@@ -44,8 +53,7 @@ export async function postBlog(req, res) {
                 dislikes: [],
                 slug: req.body.title.toLowerCase().replace(/\s/g, "-"),
                 description: [
-                    ...downloadURLs,
-                    ...req.body.paragraphs
+                    ...downloadURLs
                 ]
             })
 
