@@ -3,6 +3,7 @@ import DBConnection from './modal/index.js';
 import cors from 'cors';
 import * as url from 'url';
 import userRoute from './route/userRoute.js';
+import blogRoute from './route/blogRoute.js';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
@@ -15,6 +16,7 @@ app.use(cors({
 }));
 
 app.use("/api/v2/user", userRoute);
+app.use("/api/v2/blog",blogRoute);
 
 
 app.listen(process.env.PORT || 8000, async () => {

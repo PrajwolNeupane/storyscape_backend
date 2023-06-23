@@ -200,7 +200,7 @@ export async function updateProfilePicture(req, res) {
 
         var user = await User.findById(decode.id).select(['-password', "-__v"]);
         if (user) {
-            const storageRef = ref(storage, `${user?._id + "" + Date.now()}`);
+            const storageRef = ref(storage, `ProfileImage/${user.name}-${user?._id}`);
             const metadata = {
                 contentType: req.file.mimetype,
             };

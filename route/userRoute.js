@@ -20,6 +20,6 @@ router.post("/admin/createUser",checkKey,adminSignUp)
 
 router.post("/admin/linkUser",checkKey,linkUser)
 
-router.post("/update/profile/picture",[checkKey,upload.single("filename")],updateProfilePicture);
+router.post("/update/profile/picture",[checkKey,upload.single("image")],updateProfilePicture);
 
 export default router;
