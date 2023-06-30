@@ -13,6 +13,10 @@ const BlogSchema = new mongoose.Schema({
         type: Array,
         required: true
     },
+    tag: {
+        type: String,
+        required: true
+    },
     date: {
         type: String,
         required: true
@@ -26,7 +30,7 @@ const BlogSchema = new mongoose.Schema({
         type: Array,
         required: true
     },
-    dsikes: {
+    dislikes: {
         type: Array,
         required: true
     }

@@ -111,7 +111,7 @@ export async function adminLogIn(req, res) {
             }
 
         } else {
-            res.status(400).send({ message: "Log In credential invalid" });
+            res.send({ message: "Log In credential invalid" });
         }
     } catch (e) {
         res.send({ message: e });
@@ -153,7 +153,7 @@ export async function adminSignUp(req, res) {
         console.log(e);
         res.send({ message: "Error on creating User" });
     }
-}
+}   
 
 export async function linkUser(req, res) {
     try {

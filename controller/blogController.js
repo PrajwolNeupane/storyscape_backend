@@ -10,7 +10,38 @@ import imageminPngquant from "imagemin-pngquant";
 import * as dotenv from 'dotenv';
 dotenv.config()
 
-const storage = getStorage(initializeApp(config.firebaseConfig),process.env.STORAGE_URL);
+const storage = getStorage(initializeApp(config.firebaseConfig), process.env.STORAGE_URL);
+
+export async function getBlogs(req, res) {
+    try {
+        let blogs = await Blog.find().select("-__v").populate('creater', ["-password", "-__v", "-isCreater"]);
+        res.send(blogs);
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+export async function getSingleBlog(req, res) {
+    try {
+        const slug = req.params.slug;
+        if(!slug){
+            return res.status(404).send({message:"Slug not found"});
+        }
+        let blog = await Blog.findOne({ slug }).select("-__v").populate("creater", [
+            "-password",
+            "-__v",
+            "-isCreater",
+        ]);
+        if (!blog) {
+            return res.status(404).send({message:"Blog not found"});
+        }
+        res.send(blog);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({message:"Server error"});
+    }
+}
+
 
 export async function postBlog(req, res) {
 
@@ -45,16 +76,31 @@ export async function postBlog(req, res) {
 
                 downloadURLs.push(url);
             }
+
+            var parsedParagraphs = JSON.parse(req.body?.paragraphs);
+            var dataLength = parsedParagraphs.length + downloadURLs.length;
+            var data = [];
+            var imageIndex = 0;
+
+            for (let m = 0; m < dataLength; m++) {
+                const matchingParagraph = parsedParagraphs.find((curr) => curr.indx === m);
+                if (matchingParagraph) {
+                    data.push(matchingParagraph.paragraph);
+                } else {
+                    data.push(downloadURLs[imageIndex]);
+                    imageIndex = imageIndex + 1;
+                }
+            }
+
             var blog = new Blog({
                 creater: user?._id,
                 title: req.body.title,
+                tag: req.body.tag,
                 date: Date.now(),
                 likes: [],
                 dislikes: [],
                 slug: req.body.title.toLowerCase().replace(/\s/g, "-"),
-                description: [
-                    ...downloadURLs
-                ]
+                description: data
             })
 
             blog = await blog.save();
