@@ -12,6 +12,7 @@ dotenv.config()
 
 const storage = getStorage(initializeApp(config.firebaseConfig), process.env.STORAGE_URL);
 
+
 export async function auth(req, res) {
     try {
         const token = req.body.token;

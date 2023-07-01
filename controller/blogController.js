@@ -42,7 +42,7 @@ export async function getSingleBlog(req, res) {
         if (!slug) {
             return res.status(404).send({ message: "Slug not found" });
         }
-        let blog = await Blog.findOne({ slug }).select("-__v").populate("creater", [
+        let blog = await Blog.findOne({ slug:slug }).select("-__v").populate("creater", [
             "-password",
             "-__v",
             "-isCreater",
