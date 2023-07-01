@@ -14,7 +14,22 @@ const storage = getStorage(initializeApp(config.firebaseConfig), process.env.STO
 
 export async function getBlogs(req, res) {
     try {
-        let blogs = await Blog.find().select("-__v").populate('creater', ["-password", "-__v", "-isCreater"]);
+
+        let blogs = await Blog.find()
+            .select("-__v")
+            .populate("creater", ["-password", "-__v", "-isCreater"]);
+
+        for (const blog of blogs) {
+            blog.mainDescription = blog.description[0];
+            for (const desc of blog.description) {
+                if (!desc.includes("https://firebasestorage")) {
+                    blog.mainDescription = desc;
+                    break; // Exit the inner loop
+                }
+            }
+        }
+
+
         res.send(blogs);
     } catch (e) {
         console.log(e);
@@ -24,8 +39,8 @@ export async function getBlogs(req, res) {
 export async function getSingleBlog(req, res) {
     try {
         const slug = req.params.slug;
-        if(!slug){
-            return res.status(404).send({message:"Slug not found"});
+        if (!slug) {
+            return res.status(404).send({ message: "Slug not found" });
         }
         let blog = await Blog.findOne({ slug }).select("-__v").populate("creater", [
             "-password",
@@ -33,39 +48,47 @@ export async function getSingleBlog(req, res) {
             "-isCreater",
         ]);
         if (!blog) {
-            return res.status(404).send({message:"Blog not found"});
+            return res.status(404).send({ message: "Blog not found" });
         }
         res.send(blog);
     } catch (error) {
         console.log(error);
-        res.status(500).send({message:"Server error"});
+        res.status(500).send({ message: "Server error" });
     }
 }
 
 
 export async function postBlog(req, res) {
-
-    var downloadURLs = [];
-
     try {
-
         const token = req.body.token;
-        if (!token) return res.status(401).send('Acess denied. No token provided.');
+        if (!token) {
+            return res.status(401).send('Access denied. No token provided.');
+        }
 
         const decode = jwt.verify(token, process.env.JWT_CODE);
+        if (!decode) {
+            return res.status(401).send('Access denied. Invalid token.');
+        }
 
-        if (!decode) return res.status(401).send('Acess denied. No token provided.');
+        const user = await User.findById(decode.id).select(['-password', '-__v']);
+        if (!user) {
+            return res.status(401).send('Access denied. User not found.');
+        }
 
-        var user = await User.findById(decode.id).select(['-password', "-__v"]);
-        if (user) {
+        const { files, body: { paragraphs, title, tag } } = req;
 
-            for (const curr of req.files) {
+        const downloadURLs = [];
+        const data = [];
+
+        if (files && files.length > 0) {
+            for (const curr of files) {
                 const compressedImage = await imagemin.buffer(curr.buffer, {
                     plugins: [
-                        imageminMozjpeg({ quality: 60 }), // Adjust the quality as per your requirements
-                        imageminPngquant({ quality: [0.6, 0.6] }), // Adjust the quality range as per your requirements
+                        imageminMozjpeg({ quality: 60 }),
+                        imageminPngquant({ quality: [0.6, 0.6] }),
                     ]
                 });
+
                 const storageRef = ref(storage, `BlogImage/${curr.originalname}`);
                 const metadata = {
                     contentType: curr.mimetype,
@@ -76,41 +99,40 @@ export async function postBlog(req, res) {
 
                 downloadURLs.push(url);
             }
+        }
 
-            var parsedParagraphs = JSON.parse(req.body?.paragraphs);
-            var dataLength = parsedParagraphs.length + downloadURLs.length;
-            var data = [];
-            var imageIndex = 0;
+        if (paragraphs) {
+            const parsedParagraphs = JSON.parse(paragraphs);
+            const dataLength = parsedParagraphs.length + downloadURLs.length;
+            let imageIndex = 0;
 
             for (let m = 0; m < dataLength; m++) {
-                const matchingParagraph = parsedParagraphs.find((curr) => curr.indx === m);
+                const matchingParagraph = parsedParagraphs.find(curr => curr.indx === m);
                 if (matchingParagraph) {
                     data.push(matchingParagraph.paragraph);
                 } else {
                     data.push(downloadURLs[imageIndex]);
-                    imageIndex = imageIndex + 1;
+                    imageIndex++;
                 }
             }
-
-            var blog = new Blog({
-                creater: user?._id,
-                title: req.body.title,
-                tag: req.body.tag,
-                date: Date.now(),
-                likes: [],
-                dislikes: [],
-                slug: req.body.title.toLowerCase().replace(/\s/g, "-"),
-                description: data
-            })
-
-            blog = await blog.save();
-
-            res.send({
-                blog
-            });
         }
-    } catch (e) {
-        console.log(e);
+
+        const blog = new Blog({
+            creater: user._id,
+            title,
+            tag,
+            date: Date.now(),
+            likes: [],
+            dislikes: [],
+            slug: title.toLowerCase().replace(/\s/g, "-"),
+            description: data
+        });
+
+        await blog.save();
+
+        res.send({ blog });
+    } catch (error) {
+        console.log(error);
         res.status(500).send('Error uploading images');
     }
 }

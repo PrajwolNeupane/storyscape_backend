@@ -4,12 +4,13 @@ import jwt from 'jsonwebtoken';
 import { getStorage, ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import { initializeApp } from "firebase/app";
 import config from "../config/firebase.config.js"
+import sharp from 'sharp';
 import * as dotenv from 'dotenv';
 dotenv.config()
 
 
 
-const storage = getStorage(initializeApp(config.firebaseConfig),process.env.STORAGE_URL);
+const storage = getStorage(initializeApp(config.firebaseConfig), process.env.STORAGE_URL);
 
 export async function auth(req, res) {
     try {
@@ -153,7 +154,7 @@ export async function adminSignUp(req, res) {
         console.log(e);
         res.send({ message: "Error on creating User" });
     }
-}   
+}
 
 export async function linkUser(req, res) {
     try {
@@ -206,7 +207,10 @@ export async function updateProfilePicture(req, res) {
             const metadata = {
                 contentType: req.file.mimetype,
             };
-            const snapshot = await uploadBytesResumable(storageRef, req.file.buffer, metadata);
+            const resizedImageBuffer = await sharp(req.file.buffer)
+                .resize(100, 100)
+                .toBuffer();
+            const snapshot = await uploadBytesResumable(storageRef, resizedImageBuffer, metadata);
             const downloadURL = await getDownloadURL(snapshot.ref);
             user.photoURL = downloadURL;
             await user.save();

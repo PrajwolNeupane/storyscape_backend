@@ -33,7 +33,8 @@ const BlogSchema = new mongoose.Schema({
     dislikes: {
         type: Array,
         required: true
-    }
+    },
+    mainDescription: String
 })
 
 const Blog = mongoose.models.BlogSchema || mongoose.model('Blog', BlogSchema);
