@@ -61,15 +61,24 @@ export async function getBlogsWithTag(req, res) {
     try {
         const tag = req.body.tag;
         if (tag) {
-            let blog = await Blog.findOne({ tag: tag }).select("-__v").populate("creater", [
+            let blogs = await Blog.find({ tag: tag }).select("-__v").populate("creater", [
                 "-password",
                 "-__v",
                 "-isCreater",
             ]);
-            if (!blog) {
+            if (!blogs) {
                 return res.status(404).send({ message: "Blog not found" });
             }
-            res.send(blog);
+            for (const blog of blogs) {
+                blog.mainDescription = blog.description[0];
+                for (const desc of blog.description) {
+                    if (!desc.includes("https://firebasestorage")) {
+                        blog.mainDescription = desc;
+                        break;
+                    }
+                }
+            }
+            res.send(blogs);
         } else {
             return res.status(404).send({ message: "Tag not found" });
         }
@@ -137,12 +146,18 @@ export async function postBlog(req, res) {
                 }
             }
         }
+        var timestamp = Date.now();
+        var date = new Date(timestamp);
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        const formattedDate = `${day}-${month}-${year}`;
 
         const blog = new Blog({
             creater: user._id,
             title,
             tag,
-            date: Date.now(),
+            date: formattedDate,
             likes: [],
             dislikes: [],
             slug: title.toLowerCase().replace(/\s/g, "-"),
