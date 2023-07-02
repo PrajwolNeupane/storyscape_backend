@@ -24,7 +24,7 @@ export async function getBlogs(req, res) {
             for (const desc of blog.description) {
                 if (!desc.includes("https://firebasestorage")) {
                     blog.mainDescription = desc;
-                    break; // Exit the inner loop
+                    break;
                 }
             }
         }
@@ -38,11 +38,11 @@ export async function getBlogs(req, res) {
 
 export async function getSingleBlog(req, res) {
     try {
-        const slug = req.params.slug;
+        const slug = req.body.slug;
         if (!slug) {
             return res.status(404).send({ message: "Slug not found" });
         }
-        let blog = await Blog.findOne({ slug:slug }).select("-__v").populate("creater", [
+        let blog = await Blog.findOne({ slug: slug }).select("-__v").populate("creater", [
             "-password",
             "-__v",
             "-isCreater",
@@ -57,6 +57,27 @@ export async function getSingleBlog(req, res) {
     }
 }
 
+export async function getBlogsWithTag(req, res) {
+    try {
+        const tag = req.body.tag;
+        if (tag) {
+            let blog = await Blog.findOne({ tag: tag }).select("-__v").populate("creater", [
+                "-password",
+                "-__v",
+                "-isCreater",
+            ]);
+            if (!blog) {
+                return res.status(404).send({ message: "Blog not found" });
+            }
+            res.send(blog);
+        } else {
+            return res.status(404).send({ message: "Tag not found" });
+        }
+    } catch (e) {
+        console.log(error);
+        res.status(500).send({ message: "Server error" });
+    }
+}
 
 export async function postBlog(req, res) {
     try {
