@@ -17,7 +17,7 @@ export async function getBlogs(req, res) {
 
         let blogs = await Blog.find()
             .select("-__v")
-            .populate("creater", ["-password", "-__v", "-isCreater"]);
+            .populate("creater", ["-password", "-__v", "-isCreater"]).sort({ date: -1 });
 
         for (const blog of blogs) {
             blog.mainDescription = blog.description[0];
@@ -46,7 +46,7 @@ export async function getSingleBlog(req, res) {
             "-password",
             "-__v",
             "-isCreater",
-        ]);
+        ]).sort({ date: -1 });
         if (!blog) {
             return res.status(404).send({ message: "Blog not found" });
         }
@@ -65,7 +65,7 @@ export async function getBlogsWithTag(req, res) {
                 "-password",
                 "-__v",
                 "-isCreater",
-            ]);
+            ]).sort({ date: -1 });
             if (!blogs) {
                 return res.status(404).send({ message: "Blog not found" });
             }
